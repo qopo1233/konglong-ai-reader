@@ -1,0 +1,56 @@
+{
+  "name": "wechat-electron-spider",
+  "version": "1.0.0",
+  "description": "恐龙公众号爬虫",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.example.wechatspider",
+    "productName": "微信爬虫桌面版",
+    "directories": {
+      "buildResources": "electron/renderer"
+    },
+    "files": [
+      "electron/**/*",
+      "login.js",
+      "agent.js",
+      "wechat_spider_allpages.js",
+      "node_modules/**/*",
+      "package.json",
+      "wechat_cookies.json",
+      "static/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/puppeteer/.local-chromium/**"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "better-sqlite3": "^11.9.1",
+    "dotenv": "^16.5.0",
+    "electron": "^28.2.3",
+    "element-plus": "^2.9.8",
+    "jimp": "^0.22.10",
+    "puppeteer": "^21.0.0",
+    "qrcode-reader": "^1.0.4",
+    "qrcode-terminal": "^0.12.0",
+    "vite": "^6.3.2",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.6.0"
+  },
+  "author": "",
+  "license": "MIT",
+  "keywords": []
+}
