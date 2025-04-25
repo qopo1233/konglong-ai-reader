@@ -15,11 +15,11 @@
         </el-button>
         <el-button class="float-right" size="small" @click="exportArticles" :disabled="!articles.length">导出</el-button>
       </template>
-      <el-table :data="articles" style="width:100%;" row-class-name="fixed-row-height">
+      <el-table :data="articles" style="width:100%;" row-class-name="fixed-row-height" @row-click="handleRowClick" v-loading="loading">
         <el-table-column prop="title" label="标题" show-overflow-tooltip />
-        <el-table-column prop="author" label="作者" show-overflow-tooltip />
-        <el-table-column prop="digest" label="摘要" show-overflow-tooltip />
-        <el-table-column prop="update_time" label="时间">
+        <el-table-column prop="author" label="作者" show-overflow-tooltip :width="80" />
+        <el-table-column prop="digest" label="摘要" show-overflow-tooltip :min-width="100" />
+        <el-table-column prop="update_time" label="时间" :width="130">
           <template #default="scope">{{ formatDate(scope.row.update_time) }}</template>
         </el-table-column>
         <el-table-column label="链接">
@@ -85,6 +85,7 @@ const aiDone = ref(false);
 const aiDialogVisible = ref(false);
 let aiStreamBox = null;
 const md = new MarkdownIt();
+const loading = ref(false);
 
 function formatDate(dateStr) {
   let d = dateStr;
@@ -101,26 +102,31 @@ function formatDate(dateStr) {
 }
 
 async function fetchArticles() {
-  if (!props.selectedGzh) return;
-  if (!props.selectedGzh.fakeid) return;
-  const result = await window.electronAPI.invoke('get-articles', {
-    fakeid: props.selectedGzh.fakeid,
-    pageIndex: currentPage.value,
-    pageSize
-  });
-  if (result.error) {
-    ElMessage.error('获取文章出错：' + result.error);
-    articles.value = [];
-    totalArticles.value = 0;
-    return;
+  loading.value = true;
+  try {
+    if (!props.selectedGzh) return;
+    if (!props.selectedGzh.fakeid) return;
+    const result = await window.electronAPI.invoke('get-articles', {
+      fakeid: props.selectedGzh.fakeid,
+      pageIndex: currentPage.value,
+      pageSize
+    });
+    if (result.error) {
+      ElMessage.error('获取文章出错：' + result.error);
+      articles.value = [];
+      totalArticles.value = 0;
+      return;
+    }
+    articles.value = (result.articles || []).map(a => ({
+      ...a,
+      link: a.link || a.url || a.msg_link || ''
+    }));
+    totalArticles.value = result.totalCount;
+    // 查询每篇文章的收藏状态
+    updateArticleFavMap();
+  } finally {
+    loading.value = false;
   }
-  articles.value = (result.articles || []).map(a => ({
-    ...a,
-    link: a.link || a.url || a.msg_link || ''
-  }));
-  totalArticles.value = result.totalCount;
-  // 查询每篇文章的收藏状态
-  updateArticleFavMap();
 }
 
 async function updateGzhFav() {
@@ -226,6 +232,18 @@ function handleAiStream(event, data) {
     console.log('[AI流式] done收到，aiSummary:', aiSummary.value);
     aiDone.value = true;
   }
+}
+
+function handleRowClick(row) {
+  if (!row.link) return;
+  window.electronAPI.invoke('copy-article-link', row.link).then(() => {
+    ElMessage({
+      message: '复制链接成功',
+      type: 'success',
+      duration: 2000,
+      showClose: false
+    });
+  });
 }
 
 onMounted(() => {

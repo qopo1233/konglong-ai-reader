@@ -269,12 +269,18 @@ ipcMain.handle('open-article', (event, link) => {
   win.currentArticleLink = link;
 });
 
-ipcMain.handle('copy-article-link', (event) => {
+ipcMain.handle('copy-article-link', (event, link) => {
+  if (link) {
+    require('electron').clipboard.writeText(link);
+    return true;
+  }
+  // 兼容旧逻辑
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win && win.currentArticleLink) {
-    clipboard.writeText(win.currentArticleLink);
-    win.webContents.send('copy-success');
+    require('electron').clipboard.writeText(win.currentArticleLink);
+    return true;
   }
+  return false;
 });
 
 ipcMain.handle('ai-read-article', async (event, article) => {
