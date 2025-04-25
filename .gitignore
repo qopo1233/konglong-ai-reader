@@ -1,2 +1,5 @@
 node_modules
 electron/renderer/dist
+*.db
+qrcode.png
+wechat_cookies.json
