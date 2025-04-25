@@ -24,7 +24,7 @@
         </el-table-column>
         <el-table-column label="链接">
           <template #default="scope">
-            <el-button @click.prevent="openArticle(scope.row.link)">原文</el-button>
+            <el-button @click.prevent="openArticle(scope.row.link, scope.row.title)">原文</el-button>
             <el-button
               size="small"
               :type="articleFavMap[scope.row.msgid] ? 'warning' : 'info'"
@@ -198,8 +198,8 @@ function getProxyUrl(url) {
   return `http://localhost:30099/proxy-img?url=${encodeURIComponent(url)}`;
 }
 
-function openArticle(link) {
-  window.electronAPI.invoke('open-article', link);
+function openArticle(link, title) {
+  window.electronAPI.invoke('open-article', { link, title });
 }
 
 function aiReadArticle(article) {

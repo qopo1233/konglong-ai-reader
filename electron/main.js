@@ -1,14 +1,16 @@
-const { app, BrowserWindow, ipcMain, BrowserView, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, BrowserView, clipboard, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { getLoginQRCode} = require('../login');
-const { searchGzh, getArticles, aiReadArticle, aiReadArticleStream } = require('../wechat_spider_allpages');
+const { searchGzh, getArticles, aiReadArticle, aiReadArticleStream, exportArticlePdf } = require('../wechat_spider_allpages');
 const dotenv = require('dotenv');
 const Database = require('better-sqlite3');
 const http = require('http');
 const url = require('url');
 const https = require('https');
 const { Configuration, OpenAIApi } = require('openai');
+const puppeteer = require('puppeteer');
+const os = require('os');
 dotenv.config();
 
 let browser = null;
@@ -248,7 +250,7 @@ const server = http.createServer((req, res) => {
 });
 server.listen(30099);
 
-ipcMain.handle('open-article', (event, link) => {
+ipcMain.handle('open-article', (event, { link, title }) => {
   const win = new BrowserWindow({
     width: 1000,
     height: 800,
@@ -265,8 +267,10 @@ ipcMain.handle('open-article', (event, link) => {
       webviewTag: true
     }
   });
-  win.loadFile(path.join(__dirname, 'renderer', 'article-head.html'), { query: { link } });
+  win.loadFile(path.join(__dirname, 'renderer', 'article-head.html'), { query: { link, title } });
   win.currentArticleLink = link;
+  win.currentArticleTitle = title;
+  win.setTitle(title || '原文查看');
 });
 
 ipcMain.handle('copy-article-link', (event, link) => {
@@ -308,4 +312,18 @@ ipcMain.on('ai-read-article-stream', async (event, article) => {
       event.sender.send('ai-read-article-stream', { error: e.message || String(e), done: true });
     }
   }
+});
+
+ipcMain.handle('export-article-pdf', async (event, url) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  const title = win.currentArticleTitle || 'article';
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    title: '保存PDF',
+    defaultPath: `${title}.pdf`,
+    filters: [{ name: 'PDF文件', extensions: ['pdf'] }]
+  });
+  if (canceled || !filePath) {
+    return { success: false, error: '用户取消保存' };
+  }
+  return await exportArticlePdf(url, filePath);
 });

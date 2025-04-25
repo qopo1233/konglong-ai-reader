@@ -6,6 +6,8 @@ const { getUserAgent } = require('./agent');
 const readline = require('readline');
 const e = require('cors');
 const { OpenAI } = require('openai');
+const os = require('os');
+const puppeteer = require('puppeteer');
 
 /**
  * 获取公众号历史文章列表（新版参数适配）
@@ -303,6 +305,34 @@ async function aiReadArticleStream(page, article, onDelta) {
 }
 
 /**
+ * 导出文章为PDF
+ * @param {string} url 文章链接
+ * @param {string} [savePath] 可选，保存路径
+ * @returns {Promise<{success: boolean, path?: string, error?: string}>}
+ */
+async function exportArticlePdf(url, savePath) {
+  try {
+    if (!url) return { success: false, error: '无效的URL' };
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await browser.close();
+    const fs = require('fs');
+    let filePath = savePath;
+    if (!filePath) {
+      const desktopDir = path.join(os.homedir(), 'Desktop');
+      const fileName = 'article-' + Date.now() + '.pdf';
+      filePath = path.join(desktopDir, fileName);
+    }
+    fs.writeFileSync(filePath, pdfBuffer);
+    return { success: true, path: filePath };
+  } catch (e) {
+    return { success: false, error: e.message || String(e) };
+  }
+}
+
+/**
  * 命令行交互主流程
  */
 // async function main() {
@@ -356,4 +386,4 @@ async function aiReadArticleStream(page, article, onDelta) {
 
 // main();
 
-module.exports = { searchGzh, getArticles, aiReadArticle, aiReadArticleStream };
+module.exports = { searchGzh, getArticles, aiReadArticle, aiReadArticleStream, exportArticlePdf };
