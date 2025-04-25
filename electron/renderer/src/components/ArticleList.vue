@@ -33,6 +33,14 @@
             >
               {{ articleFavMap[scope.row.msgid] ? '取消收藏' : '收藏' }}
             </el-button>
+            <el-button
+              size="small"
+              :type="'primary'"
+              @click.stop="aiReadArticle(scope.row)"
+              style="margin-left: 8px;"
+            >
+              AI阅读
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -49,12 +57,22 @@
       </div>
     </el-card>
     <el-empty v-else description="请先选择公众号" />
+    <el-dialog v-model="aiDialogVisible" title="AI总结" width="600px" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="true" class="ai-summary-box">
+      <div v-if="aiSummary" class="markdown-body" v-html="md.render(aiSummary)"></div>
+      <div v-if="aiDone" style="color:#67c23a;margin-top:1em;">AI总结已完成</div>
+      <div v-else-if="!aiSummary" style="color:#888;font-style:italic;">AI正在总结中，请稍候...</div>
+      <template #footer>
+        <el-button @click="aiDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox, ElDialog, ElButton } from 'element-plus';
+import MarkdownIt from 'markdown-it';
+import { h } from 'vue';
 const props = defineProps({ selectedGzh: Object });
 const articles = ref([]);
 const totalArticles = ref(0);
@@ -62,6 +80,11 @@ const pageSize = 5;
 const currentPage = ref(0);
 const gzhFav = ref(false);
 const articleFavMap = ref({});
+const aiSummary = ref('');
+const aiDone = ref(false);
+const aiDialogVisible = ref(false);
+let aiStreamBox = null;
+const md = new MarkdownIt();
 
 function formatDate(dateStr) {
   let d = dateStr;
@@ -173,13 +196,51 @@ function openArticle(link) {
   window.electronAPI.invoke('open-article', link);
 }
 
+function aiReadArticle(article) {
+  console.log('[前端] AI阅读按钮点击', article);
+  if (!article.appmsgid) {
+    console.error('[前端] appmsgid', article);
+    return;
+  }
+  const pureArticle = JSON.parse(JSON.stringify(article));
+  aiSummary.value = '';
+  aiDone.value = false;
+  aiDialogVisible.value = true;
+  window.electronAPI.send('ai-read-article-stream', pureArticle);
+}
+
+function handleAiStream(event, data) {
+  if (data?.content) {
+    aiSummary.value += data.content;
+  }
+  if (data?.error) {
+    aiDialogVisible.value = false;
+    ElMessageBox({
+      title: 'AI总结失败',
+      message: () => h('div', { class: 'markdown-body', innerHTML: md.render(data.error) }),
+      dangerouslyUseHTMLString: true,
+      customClass: 'ai-summary-box',
+    });
+  }
+  if (data?.done) {
+    console.log('[AI流式] done收到，aiSummary:', aiSummary.value);
+    aiDone.value = true;
+  }
+}
+
 onMounted(() => {
   updateGzhFav();
   window.addEventListener('fav-gzh-changed', updateGzhFav);
+  if (window.electronAPI?.on) {
+    window.electronAPI.on('ai-read-article-stream', handleAiStream);
+  }
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('fav-gzh-changed', updateGzhFav);
+  if (window.electronAPI?.removeListener) {
+    window.electronAPI.removeListener('ai-read-article-stream', handleAiStream);
+  }
 });
 </script>
 
@@ -207,5 +268,41 @@ onBeforeUnmount(() => {
   vertical-align: middle;
   background: #eee;
   object-fit: cover;
+}
+</style>
+
+<style>
+.markdown-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #222;
+  background: none;
+  padding: 0;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+}
+.markdown-body p {
+  margin: 0.5em 0;
+}
+.markdown-body code {
+  background: #f6f8fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 90%;
+}
+.markdown-body pre {
+  background: #f6f8fa;
+  padding: 8px 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.markdown-body ul, .markdown-body ol {
+  margin: 0.5em 0 0.5em 1.5em;
+}
+.ai-summary-box {
+  width: 600px !important;
+  max-width: 90vw;
 }
 </style> 

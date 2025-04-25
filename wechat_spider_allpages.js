@@ -5,6 +5,7 @@ const path = require('path');
 const { getUserAgent } = require('./agent');
 const readline = require('readline');
 const e = require('cors');
+const { OpenAI } = require('openai');
 
 /**
  * 获取公众号历史文章列表（新版参数适配）
@@ -183,6 +184,125 @@ async function searchGzh(page, query) {
 }
 
 /**
+ * AI阅读：抓取正文并用OpenAI总结
+ * @param {object} page Puppeteer页面对象
+ * @param {object} article 文章对象，需有link字段
+ * @returns {Promise<{summary?: string, error?: string}>}
+ */
+async function aiReadArticle(page, article) {
+  try {
+    console.log('[AI阅读] 入参 article:', article);
+    if (!article.link) {
+      console.error('[AI阅读] 无效的文章链接');
+      return { error: '无效的文章链接' };
+    }
+    if (!page) {
+      console.error('[AI阅读] 未初始化puppeteer页面');
+      return { error: '未初始化puppeteer页面' };
+    }
+    const articleUrl = article.link;
+    console.log('[AI阅读] 开始抓取正文:', articleUrl);
+    const articleContent = await page.evaluate(async (url) => {
+      const res = await fetch(url);
+      const html = await res.text();
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      const content = div.querySelector('#js_content');
+      console.log('[AI阅读] 抓取到正文:', content ? content.innerText : '');
+      return content ? content.innerText : '';
+    }, articleUrl);
+    console.log('[AI阅读] 抓取到正文:', articleContent);
+    if (!articleContent) {
+      console.error('[AI阅读] 未能提取到正文内容');
+      return { error: '未能提取到正文内容' };
+    }
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: process.env.OPENAI_BASE_URL,
+    });
+
+    const prompt = `请用中文总结以下微信公众号文章的主要内容，要求简明扼要：\n${articleContent}`;
+    console.log('[AI阅读] 调用OpenAI，内容前100字:', prompt.slice(0, 100));
+    const completion = await openai.chat.completions.create({
+      model: 'deepseek-ai/DeepSeek-V3',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7
+    });
+    const summary = completion.choices[0].message.content;
+    console.log('[AI阅读] OpenAI返回:', summary);
+    return { summary };
+  } catch (e) {
+    console.error('[AI阅读] 错误:', e);
+    return { error: e.message || String(e) };
+  }
+}
+
+/**
+ * AI阅读：流式抓取正文并用OpenAI总结
+ * @param {object} page Puppeteer页面对象
+ * @param {object} article 文章对象，需有link字段
+ * @param {function} onDelta 每有新内容时回调(content:string)，结束时onDelta(null)
+ */
+async function aiReadArticleStream(page, article, onDelta) {
+  try {
+    console.log('[AI流式] 入参 article:', article);
+    if (!article.link) {
+      console.error('[AI流式] 无效的文章链接');
+      onDelta('[AI流式] 无效的文章链接');
+      onDelta(null);
+      return;
+    }
+    if (!page) {
+      console.error('[AI流式] 未初始化puppeteer页面');
+      onDelta('[AI流式] 未初始化puppeteer页面');
+      onDelta(null);
+      return;
+    }
+    const articleUrl = article.link;
+    console.log('[AI流式] 开始抓取正文:', articleUrl);
+    const articleContent = await page.evaluate(async (url) => {
+      const res = await fetch(url);
+      const html = await res.text();
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      const content = div.querySelector('#js_content');
+      return content ? content.innerText : '';
+    }, articleUrl);
+    console.log('[AI流式] 抓取到正文长度:', articleContent ? articleContent.length : 0);
+    if (!articleContent) {
+      console.error('[AI流式] 未能提取到正文内容');
+      onDelta('[AI流式] 未能提取到正文内容');
+      onDelta(null);
+      return;
+    }
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: process.env.OPENAI_BASE_URL,
+    });
+    const prompt = `请用中文总结以下微信公众号文章的主要内容，要求简明扼要：\n${articleContent}`;
+    console.log('[AI流式] 调用OpenAI流式，内容前100字:', prompt.slice(0, 100));
+    const stream = await openai.chat.completions.create({
+      model: 'deepseek-ai/DeepSeek-V3',
+      messages: [{ role: 'user', content: prompt }],
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 512
+    });
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content || '';
+      if (delta) {
+        onDelta(delta);
+      }
+    }
+    onDelta(null); // 结束
+  } catch (e) {
+    console.error('[AI流式] 错误:', e);
+    onDelta('[AI流式] 错误: ' + (e.message || String(e)));
+    onDelta(null);
+  }
+}
+
+/**
  * 命令行交互主流程
  */
 // async function main() {
@@ -236,4 +356,4 @@ async function searchGzh(page, query) {
 
 // main();
 
-module.exports = { searchGzh, getArticles };
+module.exports = { searchGzh, getArticles, aiReadArticle, aiReadArticleStream };

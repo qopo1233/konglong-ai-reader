@@ -3,3 +3,4 @@ electron/renderer/dist
 *.db
 qrcode.png
 wechat_cookies.json
+.env

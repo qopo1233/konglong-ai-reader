@@ -2,12 +2,13 @@ const { app, BrowserWindow, ipcMain, BrowserView, clipboard } = require('electro
 const path = require('path');
 const fs = require('fs');
 const { getLoginQRCode} = require('../login');
-const { searchGzh, getArticles } = require('../wechat_spider_allpages');
+const { searchGzh, getArticles, aiReadArticle, aiReadArticleStream } = require('../wechat_spider_allpages');
 const dotenv = require('dotenv');
 const Database = require('better-sqlite3');
 const http = require('http');
 const url = require('url');
 const https = require('https');
+const { Configuration, OpenAIApi } = require('openai');
 dotenv.config();
 
 let browser = null;
@@ -125,7 +126,7 @@ ipcMain.handle('check-login', async () => {
     const cookies = await page.cookies();
     const cookiePath = path.join(__dirname, '../wechat_cookies.json');
     fs.writeFileSync(cookiePath, JSON.stringify(cookies, null, 2));
-
+    
     return { status: 'success' };
   } catch {
     return { status: 'waiting' };
@@ -273,5 +274,32 @@ ipcMain.handle('copy-article-link', (event) => {
   if (win && win.currentArticleLink) {
     clipboard.writeText(win.currentArticleLink);
     win.webContents.send('copy-success');
+  }
+});
+
+ipcMain.handle('ai-read-article', async (event, article) => {
+  if (!page) return { error: '未初始化puppeteer页面' };
+  return await aiReadArticle(page, article);
+});
+
+ipcMain.on('ai-read-article-stream', async (event, article) => {
+  if (!page) {
+    event.sender.send('ai-read-article-stream', { error: '未初始化puppeteer页面', done: true });
+    return;
+  }
+  let finished = false;
+  try {
+    await aiReadArticleStream(page, article, (delta) => {
+      if (delta === null) {
+        finished = true;
+        event.sender.send('ai-read-article-stream', { done: true });
+      } else {
+        event.sender.send('ai-read-article-stream', { content: delta });
+      }
+    });
+  } catch (e) {
+    if (!finished) {
+      event.sender.send('ai-read-article-stream', { error: e.message || String(e), done: true });
+    }
   }
 });
