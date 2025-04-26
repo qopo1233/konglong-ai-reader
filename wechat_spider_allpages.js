@@ -192,9 +192,10 @@ async function searchGzh(page, query) {
  * AI阅读：抓取正文并用OpenAI总结
  * @param {object} page Puppeteer页面对象
  * @param {object} article 文章对象，需有link字段
+ * @param {object} openaiConfig 可选，OpenAI配置参数
  * @returns {Promise<{summary?: string, error?: string}>}
  */
-async function aiReadArticle(page, article) {
+async function aiReadArticle(page, article, openaiConfig = {}) {
   try {
     console.log('[AI阅读] 入参 article:', article);
     if (!article.link) {
@@ -222,16 +223,17 @@ async function aiReadArticle(page, article) {
       return { error: '未能提取到正文内容' };
     }
     const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL,
+      apiKey: openaiConfig.apiKey || process.env.OPENAI_API_KEY,
+      baseURL: openaiConfig.baseUrl || process.env.OPENAI_BASE_URL,
     });
 
     const prompt = `请用中文总结以下微信公众号文章的主要内容，要求简明扼要：\n${articleContent}`;
     console.log('[AI阅读] 调用OpenAI，内容前100字:', prompt.slice(0, 100));
     const completion = await openai.chat.completions.create({
-      model: 'deepseek-ai/DeepSeek-V3',
+      model: openaiConfig.model || 'deepseek-ai/DeepSeek-V3',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7
+      temperature: 0.7,
+      stream: openaiConfig.stream || false,
     });
     const summary = completion.choices[0].message.content;
     console.log('[AI阅读] OpenAI返回:', summary);
@@ -247,8 +249,9 @@ async function aiReadArticle(page, article) {
  * @param {object} page Puppeteer页面对象
  * @param {object} article 文章对象，需有link字段
  * @param {function} onDelta 每有新内容时回调(content:string)，结束时onDelta(null)
+ * @param {object} openaiConfig 可选，OpenAI配置参数
  */
-async function aiReadArticleStream(page, article, onDelta) {
+async function aiReadArticleStream(page, article, onDelta, openaiConfig = {}) {
   try {
     console.log('[AI流式] 入参 article:', article);
     if (!article.link) {
@@ -281,15 +284,15 @@ async function aiReadArticleStream(page, article, onDelta) {
       return;
     }
     const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL,
+      apiKey: openaiConfig.apiKey,
+      baseURL: openaiConfig.baseUrl,
     });
     const prompt = `请用中文总结以下微信公众号文章的主要内容，要求简明扼要：\n${articleContent}`;
     console.log('[AI流式] 调用OpenAI流式，内容前100字:', prompt.slice(0, 100));
     const stream = await openai.chat.completions.create({
-      model: 'Qwen/QwQ-32B',
+      model: openaiConfig.model,
       messages: [{ role: 'user', content: prompt }],
-      stream: true,
+      stream: openaiConfig.stream !== undefined ? openaiConfig.stream : true,
       temperature: 0.7,
       max_tokens: 512
     });

@@ -32,6 +32,13 @@ db.prepare(`CREATE TABLE IF NOT EXISTS fav_article (
   update_time TEXT,
   fakeid TEXT
 )`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS openai_config (
+  id INTEGER PRIMARY KEY,
+  base_url TEXT,
+  model TEXT,
+  stream INTEGER,
+  api_key TEXT
+)`).run();
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -292,7 +299,13 @@ ipcMain.handle('copy-article-link', (event, link) => {
 
 ipcMain.handle('ai-read-article', async (event, article) => {
   if (!page) return { error: '未初始化puppeteer页面' };
-  return await aiReadArticle(page, article);
+  const config = db.prepare('SELECT * FROM openai_config WHERE id=1').get() || {};
+  return await aiReadArticle(page, article, {
+    baseUrl: config.base_url,
+    model: config.model,
+    stream: !!config.stream,
+    apiKey: config.api_key
+  });
 });
 
 ipcMain.on('ai-read-article-stream', async (event, article) => {
@@ -300,6 +313,7 @@ ipcMain.on('ai-read-article-stream', async (event, article) => {
     event.sender.send('ai-read-article-stream', { error: '未初始化puppeteer页面', done: true });
     return;
   }
+  const config = db.prepare('SELECT * FROM openai_config WHERE id=1').get() || {};
   let finished = false;
   try {
     await aiReadArticleStream(page, article, (delta) => {
@@ -309,6 +323,11 @@ ipcMain.on('ai-read-article-stream', async (event, article) => {
       } else {
         event.sender.send('ai-read-article-stream', { content: delta });
       }
+    }, {
+      baseUrl: config.base_url,
+      model: config.model,
+      stream: !!config.stream,
+      apiKey: config.api_key
     });
   } catch (e) {
     if (!finished) {
@@ -329,4 +348,24 @@ ipcMain.handle('export-article-pdf', async (event, url) => {
     return { success: false, error: '用户取消保存' };
   }
   return await exportArticlePdf(url, filePath);
+});
+
+ipcMain.handle('get-openai-config', () => {
+  const row = db.prepare('SELECT * FROM openai_config WHERE id=1').get();
+  if (!row) {
+    return { base_url: '', model: '', stream: 0, api_key: '' };
+  }
+  return {
+    base_url: row.base_url || '',
+    model: row.model || '',
+    stream: !!row.stream,
+    api_key: row.api_key || ''
+  };
+});
+
+ipcMain.handle('set-openai-config', (event, config) => {
+  db.prepare(`INSERT INTO openai_config (id, base_url, model, stream, api_key) VALUES (1, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET base_url=excluded.base_url, model=excluded.model, stream=excluded.stream, api_key=excluded.api_key`)
+    .run(config.base_url, config.model, config.stream ? 1 : 0, config.api_key);
+  return true;
 });
