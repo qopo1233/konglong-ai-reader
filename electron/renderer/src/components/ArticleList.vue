@@ -31,7 +31,7 @@
               @click.stop="toggleArticleFav(scope.row)"
               style="margin-left: 8px;"
             >
-              {{ articleFavMap[scope.row.msgid] ? '取消收藏' : '收藏' }}
+              {{ articleFavMap[scope.row.appmsgid] ? '取消收藏' : '收藏' }}
             </el-button>
             <el-button
               size="small"
@@ -149,25 +149,22 @@ async function toggleGzhFav() {
 async function updateArticleFavMap() {
   const map = {};
   for (const a of articles.value) {
-    if (!a.msgid) continue;
-    map[a.msgid] = await window.electronAPI.invoke('is-fav-article', a.msgid);
+    if (!a.appmsgid) continue;
+    map[a.appmsgid] = await window.electronAPI.invoke('is-fav-article', a.appmsgid);
   }
   articleFavMap.value = map;
 }
 
 async function toggleArticleFav(article) {
-  if (!article.msgid) return;
+  if (!article.appmsgid) return;
   const pureArticle = JSON.parse(JSON.stringify(article));
   console.log('[前端] 点击收藏文章', pureArticle);
-  const res = await window.electronAPI.invoke('toggle-fav-article', {
+  await window.electronAPI.invoke('toggle-fav-article', {
     ...pureArticle,
     fakeid: props.selectedGzh.fakeid
   });
-  console.log('[前端] toggle-fav-article 返回', res);
-  articleFavMap.value = {
-    ...articleFavMap.value,
-    [article.msgid]: res.fav
-  };
+  // 操作后强制刷新所有收藏状态
+  await updateArticleFavMap();
 }
 
 watch(() => props.selectedGzh, () => {

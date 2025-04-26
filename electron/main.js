@@ -24,7 +24,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS fav_gzh (
   round_head_img TEXT
 )`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS fav_article (
-  msgid TEXT PRIMARY KEY,
+  appmsgid TEXT PRIMARY KEY,
   title TEXT,
   author TEXT,
   digest TEXT,
@@ -202,19 +202,19 @@ ipcMain.handle('get-fav-gzh-list', () => {
 
 // 收藏/取消收藏文章
 ipcMain.handle('toggle-fav-article', (event, article) => {
-  const exists = db.prepare('SELECT 1 FROM fav_article WHERE msgid=?').get(article.msgid);
+  const exists = db.prepare('SELECT 1 FROM fav_article WHERE appmsgid=?').get(article.appmsgid);
   if (exists) {
-    db.prepare('DELETE FROM fav_article WHERE msgid=?').run(article.msgid);
+    db.prepare('DELETE FROM fav_article WHERE appmsgid=?').run(article.appmsgid);
     return { fav: false };
   } else {
-    db.prepare('INSERT INTO fav_article (msgid, title, author, digest, link, update_time, fakeid) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      article.msgid, article.title, article.author, article.digest, article.link, article.update_time, article.fakeid
+    db.prepare('INSERT INTO fav_article (appmsgid, title, author, digest, link, update_time, fakeid) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+      article.appmsgid, article.title, article.author, article.digest, article.link, article.update_time, article.fakeid
     );
     return { fav: true };
   }
 });
-ipcMain.handle('is-fav-article', (event, msgid) => {
-  const exists = db.prepare('SELECT 1 FROM fav_article WHERE msgid=?').get(msgid);
+ipcMain.handle('is-fav-article', (event, appmsgid) => {
+  const exists = db.prepare('SELECT 1 FROM fav_article WHERE appmsgid=?').get(appmsgid);
   return !!exists;
 });
 ipcMain.handle('get-fav-article-list', () => {
