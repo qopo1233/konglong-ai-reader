@@ -35,8 +35,10 @@ db.prepare(`CREATE TABLE IF NOT EXISTS fav_article (
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1000,
+    width: 1200,
     height: 800,
+    minWidth: 900,
+    minHeight: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -44,6 +46,7 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'static', 'icon.png')
   });
+  win.maximize();
   if (process.env.VITE_DEV_SERVER === 'true') {
     win.loadURL('http://localhost:5173');
   } else {

@@ -330,7 +330,7 @@ async function getLoginQRCode() {
   if (!fs.existsSync(STATIC_DIR)) {
     fs.mkdirSync(STATIC_DIR, { recursive: true });
   }
-  const qrCodePath = path.join(STATIC_DIR, `qrcode_${Date.now()}.png`);
+  const qrCodePath = path.join(STATIC_DIR, `qrcode_wechat.png`);
   try {
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
