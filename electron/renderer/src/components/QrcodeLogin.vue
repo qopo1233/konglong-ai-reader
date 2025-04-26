@@ -1,19 +1,19 @@
 <template>
-  <el-card class="login-card" shadow="hover">
-    <template #header>
-      <span>1. 扫码登录</span>
-    </template>
-    <div class="qrcode-box" v-if="!loggedIn">
-      <el-skeleton :loading="loading" animated>
-        <template #template>
-          <el-skeleton-item variant="image" style="width:200px;height:200px;" />
+  <div class="login-bg">
+    <div class="login-card-simple">
+      <div class="login-header-simple">登录微信阅读器</div>
+      <div class="qrcode-box-simple" v-if="!loggedIn">
+        <template v-if="qrcode">
+          <div class="qrcode-img-wrap-simple">
+            <img :src="qrcode" class="qrcode-img-simple" alt="请扫码登录" />
+          </div>
+          <div class="login-tip-simple">请使用 <b>微信</b> 扫描二维码登录</div>
         </template>
-        <img v-if="qrcode" :src="qrcode" class="qrcode-img" alt="请扫码登录" />
-      </el-skeleton>
-      <div class="login-status">{{ status }}</div>
+        <div class="login-status-simple" :class="{ success: loggedIn, error: status.includes('失败') }">{{ status }}</div>
+      </div>
+      <el-result v-else icon="success" title="登录成功" />
     </div>
-    <el-result v-else icon="success" title="登录成功" />
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -62,22 +62,91 @@ onMounted(fetchQrcode);
 </script>
 
 <style scoped>
-.login-card {
-  max-width: 400px;
-  margin: 40px auto;
+.login-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.qrcode-box {
+.login-card-simple {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 32px 32px 32px;
+  box-shadow: 0 2px 24px 0 #0001;
+  min-width: 320px;
+  max-width: 96vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.login-header-simple {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222;
+  text-align: center;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+.qrcode-box-simple {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.qrcode-img-wrap-simple {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.qrcode-img-simple {
+  width: 220px;
+  height: 220px;
+  border-radius: 18px;
+  border: 1.5px solid #e0e7ef;
+  background: #fff;
+  box-shadow: 0 2px 16px #0001;
+  display: block;
+}
+.login-tip-simple {
+  color: #666;
+  font-size: 15px;
+  margin-bottom: 10px;
+  margin-top: -6px;
+  letter-spacing: 0.5px;
+}
+.login-status-simple {
+  margin-top: 18px;
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: color 0.2s;
   text-align: center;
 }
-.qrcode-img {
-  width: 200px;
-  height: 200px;
-  border: 1px solid #eee;
-  background: #fafafa;
-  display: inline-block;
+.login-status-simple.error {
+  color: #e74c3c;
 }
-.login-status {
-  margin-top: 16px;
-  color: #888;
+.login-status-simple.success {
+  color: #67c23a;
+}
+@media (max-width: 600px) {
+  .login-card-simple {
+    min-width: 0;
+    padding: 24px 2vw 18px 2vw;
+  }
+  .qrcode-img-simple {
+    width: 70vw;
+    height: 70vw;
+    min-width: 120px;
+    min-height: 120px;
+    max-width: 90vw;
+    max-height: 90vw;
+  }
+  .login-header-simple {
+    font-size: 1.3rem;
+    margin-bottom: 18px;
+  }
 }
 </style> 

@@ -13,7 +13,7 @@
         >
           {{ gzhFav ? '取消收藏' : '收藏公众号' }}
         </el-button>
-        <el-button class="float-right" size="small" @click="exportArticles" :disabled="!articles.length">导出</el-button>
+        <!-- <el-button class="float-right" size="small" @click="exportArticles" :disabled="!articles.length">导出</el-button> -->
       </template>
       <el-table :data="articles" style="width:100%;" row-class-name="fixed-row-height" @row-click="handleRowClick" v-loading="loading">
         <el-table-column prop="title" label="标题" show-overflow-tooltip />
