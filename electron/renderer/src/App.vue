@@ -2,27 +2,35 @@
   <el-container style="height: 100vh;" v-if="isLoggedIn">
     <!-- 最左侧图标栏 -->
     <el-aside width="60px" class="icon-bar">
-      <div
-        v-for="item in navList"
-        :key="item.key"
-        :class="['icon-item', {active: activeNav === item.key}]"
-        @click="activeNav = item.key"
-        :title="item.label"
-      >
-        <el-icon :size="28"><component :is="item.icon" /></el-icon>
+      <div>
+        <div
+          v-for="item in topMenus"
+          :key="item.key"
+          :class="['icon-item', {active: activeNav === item.key}]"
+          @click="activeNav = item.key"
+          :title="item.label"
+        >
+          <el-icon :size="28"><component :is="item.icon" /></el-icon>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <div>
+        <div
+          v-for="item in bottomMenus"
+          :key="item.key"
+          :class="['icon-item', {active: activeNav === item.key}]"
+          @click="activeNav = item.key"
+          :title="item.label"
+        >
+          <el-icon :size="28"><component :is="item.icon" /></el-icon>
+        </div>
       </div>
     </el-aside>
-    <!-- 中间子功能区 -->
-    <el-aside width="260px" class="sub-menu">
-      <keep-alive>
-        <component :is="navList.find(i => i.key === activeNav).sideComponent" @select="onSelect" />
-      </keep-alive>
-    </el-aside>
-    <!-- 右侧主内容区 -->
+    <!-- 主内容区 -->
     <el-main class="main-panel">
       <keep-alive>
         <component
-          :is="navList.find(i => i.key === activeNav).mainComponent"
+          :is="getMenuByKey(activeNav).mainComponent"
           :selected-gzh="selectedGzh"
           :selected="favTab"
           @jump-to-gzh="handleJumpToGzh"
@@ -34,22 +42,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { User, Star } from '@element-plus/icons-vue';
-import GzhSearch from './components/GzhSearch.vue';
-import ArticleList from './components/ArticleList.vue';
-import FavMenu from './components/FavMenu.vue';
-import FavContent from './components/FavContent.vue';
+import { ref, computed, onMounted } from 'vue';
+import menuConfig from './menuConfig';
 import QrcodeLogin from './components/QrcodeLogin.vue';
 
-const navList = [
-  { key: 'gzh', label: '公众号', icon: User, sideComponent: GzhSearch, mainComponent: ArticleList },
-  { key: 'fav', label: '收藏夹', icon: Star, sideComponent: FavMenu, mainComponent: FavContent },
-];
-const activeNav = ref('gzh');
+const activeNav = ref(menuConfig[0].key);
 const selectedGzh = ref(null);
 const favTab = ref('article');
 const isLoggedIn = ref(false);
+
+const topMenus = computed(() => menuConfig.filter(i => i.position !== 'bottom'));
+const bottomMenus = computed(() => menuConfig.filter(i => i.position === 'bottom'));
+
+function getMenuByKey(key) {
+  return menuConfig.find(i => i.key === key);
+}
 
 function onSelect(item) {
   if (activeNav.value === 'fav') {
@@ -106,12 +113,6 @@ body, html, #app {
 }
 .icon-item.active, .icon-item:hover {
   background: #e0f0ff;
-}
-.sub-menu {
-  background: #f8fafc;
-  border-right: 1px solid #e4e7ed;
-  padding: 0;
-  min-width: 200px;
 }
 .main-panel {
   background: #fff;
