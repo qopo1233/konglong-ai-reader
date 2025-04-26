@@ -27,12 +27,15 @@ const favArticleList = ref([]);
 
 function formatDate(dateStr) {
   let d = dateStr;
-  if (typeof d === 'number' || /^\d+$/.test(d)) {
-    d = new Date(Number(d) * 1000);
+  // 支持浮点型字符串（如'1745638517.0'）
+  if (typeof d === 'number' || /^\d+(\.\d+)?$/.test(d)) {
+    d = new Date(Math.floor(Number(d)) * 1000);
   } else {
     d = new Date(d);
   }
-  if (isNaN(d.getTime())) return dateStr;
+  if (isNaN(d.getTime())) {
+    return dateStr;
+  }
   const y = d.getFullYear();
   const m = (d.getMonth() + 1).toString().padStart(2, '0');
   const day = d.getDate().toString().padStart(2, '0');
