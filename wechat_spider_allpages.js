@@ -84,6 +84,9 @@ async function getArticles(page, fakeid, begin = 0, count = 5, fingerprint = '',
         // appmsgex 是文章数组
         if (Array.isArray(info.appmsgex)) {
           for (const item of info.appmsgex) {
+            if (item.item_show_type === 11) {
+              continue;
+            }
             articles.push({
               title: item.title,
               link: item.link.replace(/\\\\\//g, '/').replace(/\\\//g, '/'),
@@ -284,7 +287,7 @@ async function aiReadArticleStream(page, article, onDelta) {
     const prompt = `请用中文总结以下微信公众号文章的主要内容，要求简明扼要：\n${articleContent}`;
     console.log('[AI流式] 调用OpenAI流式，内容前100字:', prompt.slice(0, 100));
     const stream = await openai.chat.completions.create({
-      model: 'deepseek-ai/DeepSeek-V3',
+      model: 'Qwen/QwQ-32B',
       messages: [{ role: 'user', content: prompt }],
       stream: true,
       temperature: 0.7,

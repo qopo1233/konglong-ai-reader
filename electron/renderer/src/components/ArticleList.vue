@@ -27,7 +27,7 @@
             <el-button @click.prevent="openArticle(scope.row.link, scope.row.title)">原文</el-button>
             <el-button
               size="small"
-              :type="articleFavMap[scope.row.msgid] ? 'warning' : 'info'"
+              :type="articleFavMap[scope.row.appmsgid] ? 'warning' : 'info'"
               @click.stop="toggleArticleFav(scope.row)"
               style="margin-left: 8px;"
             >
