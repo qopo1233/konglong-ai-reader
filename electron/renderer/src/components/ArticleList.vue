@@ -57,7 +57,15 @@
       </div>
     </el-card>
     <el-empty v-else description="请先选择公众号" />
-    <el-dialog v-model="aiDialogVisible" title="AI总结" width="600px" :close-on-click-modal="false" :close-on-press-escape="false" :show-close="true" class="ai-summary-box">
+    <el-dialog
+      v-model="aiDialogVisible"
+      :title="`AI总结${aiArticleTitle ? ' - ' + aiArticleTitle : ''}`"
+      width="800px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="true"
+      class="ai-summary-box"
+    >
       <div v-if="aiSummary" class="markdown-body" v-html="md.render(aiSummary)"></div>
       <div v-if="aiDone" style="color:#67c23a;margin-top:1em;">AI总结已完成</div>
       <div v-else-if="!aiSummary" style="color:#888;font-style:italic;">AI正在总结中，请稍候...</div>
@@ -83,6 +91,7 @@ const articleFavMap = ref({});
 const aiSummary = ref('');
 const aiDone = ref(false);
 const aiDialogVisible = ref(false);
+const aiArticleTitle = ref('');
 let aiStreamBox = null;
 const md = new MarkdownIt();
 const loading = ref(false);
@@ -209,6 +218,7 @@ function aiReadArticle(article) {
   aiSummary.value = '';
   aiDone.value = false;
   aiDialogVisible.value = true;
+  aiArticleTitle.value = article.title || '';
   window.electronAPI.send('ai-read-article-stream', pureArticle);
 }
 
@@ -317,7 +327,7 @@ onBeforeUnmount(() => {
   margin: 0.5em 0 0.5em 1.5em;
 }
 .ai-summary-box {
-  width: 600px !important;
+  width: 1000px !important;
   max-width: 90vw;
 }
 </style> 
