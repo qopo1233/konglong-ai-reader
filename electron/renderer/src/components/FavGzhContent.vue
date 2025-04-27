@@ -18,8 +18,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useProxyImg } from './ProxyImgMixin';
+
 const gzhList = ref([]);
 const emit = defineEmits(['jump-to-gzh']);
+const { getProxyUrl } = useProxyImg();
 
 async function fetchFavGzhList() {
   gzhList.value = await window.electronAPI.invoke('get-fav-gzh-list');
@@ -30,10 +33,6 @@ async function removeGzhFav(gzh) {
   await window.electronAPI.invoke('toggle-fav-gzh', pureGzh);
   fetchFavGzhList();
   window.dispatchEvent(new CustomEvent('fav-gzh-changed', { detail: pureGzh.fakeid }));
-}
-
-function getProxyUrl(url) {
-  return `http://localhost:30099/proxy-img?url=${encodeURIComponent(url)}`;
 }
 
 function handleGzhClick(gzh) {

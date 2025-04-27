@@ -12,7 +12,7 @@
     "appId": "com.konglongreader.desktop",
     "productName": "恐龙微信公众号阅读桌面版",
     "directories": {
-      "buildResources": "electron/renderer"
+      "buildResources": "electron/static"
     },
     "files": [
       "electron/**/*",
@@ -31,7 +31,8 @@
       "target": "nsis"
     },
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "icon.icns"
     }
   },
   "dependencies": {

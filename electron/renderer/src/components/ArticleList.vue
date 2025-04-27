@@ -81,6 +81,7 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { ElMessage, ElMessageBox, ElDialog, ElButton } from 'element-plus';
 import MarkdownIt from 'markdown-it';
 import { h } from 'vue';
+import { useProxyImg } from './ProxyImgMixin';
 const props = defineProps({ selectedGzh: Object });
 const articles = ref([]);
 const totalArticles = ref(0);
@@ -95,6 +96,7 @@ const aiArticleTitle = ref('');
 let aiStreamBox = null;
 const md = new MarkdownIt();
 const loading = ref(false);
+const { getProxyUrl } = useProxyImg();
 
 function formatDate(dateStr) {
   let d = dateStr;
@@ -198,10 +200,6 @@ function exportArticles() {
   a.download = 'articles.csv';
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function getProxyUrl(url) {
-  return `http://localhost:30099/proxy-img?url=${encodeURIComponent(url)}`;
 }
 
 function openArticle(link, title) {

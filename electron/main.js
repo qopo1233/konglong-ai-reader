@@ -40,6 +40,54 @@ db.prepare(`CREATE TABLE IF NOT EXISTS openai_config (
   api_key TEXT
 )`).run();
 
+let proxyPort = 30099;
+function startProxyServer(port = 30099, maxTries = 10) {
+  const server = http.createServer((req, res) => {
+    const query = url.parse(req.url, true).query;
+    if (req.url.startsWith('/proxy-img') && query.url) {
+      const imgUrl = decodeURIComponent(query.url);
+      const mod = imgUrl.startsWith('https') ? https : http;
+      const options = {
+        headers: {
+          Referer: 'https://mp.weixin.qq.com/',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      };
+      mod.get(imgUrl, options, (imgRes) => {
+        if (imgRes.statusCode !== 200) {
+          res.writeHead(imgRes.statusCode);
+          res.end('proxy error');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'] });
+        imgRes.pipe(res);
+      }).on('error', (err) => {
+        console.error('[图片代理] 代理出错：', err);
+        res.writeHead(500);
+        res.end('proxy error');
+      });
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && maxTries > 0) {
+      console.warn(`端口 ${port} 被占用，尝试下一个端口...`);
+      startProxyServer(port + 1, maxTries - 1);
+    } else {
+      console.error('图片代理服务启动失败:', err);
+    }
+  });
+  server.listen(port, () => {
+    proxyPort = port;
+    console.log(`图片代理服务已启动，端口: ${port}`);
+  });
+}
+startProxyServer();
+
+ipcMain.handle('get-proxy-port', () => proxyPort);
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -226,38 +274,6 @@ ipcMain.handle('is-fav-article', (event, appmsgid) => {
 ipcMain.handle('get-fav-article-list', () => {
   return db.prepare('SELECT * FROM fav_article').all();
 });
-
-// 启动本地图片代理服务（用Node原生https/http模块）
-const server = http.createServer((req, res) => {
-  const query = url.parse(req.url, true).query;
-  if (req.url.startsWith('/proxy-img') && query.url) {
-    const imgUrl = decodeURIComponent(query.url);
-    const mod = imgUrl.startsWith('https') ? https : http;
-    const options = {
-      headers: {
-        Referer: 'https://mp.weixin.qq.com/',
-        'User-Agent': 'Mozilla/5.0'
-      }
-    };
-    mod.get(imgUrl, options, (imgRes) => {
-      if (imgRes.statusCode !== 200) {
-        res.writeHead(imgRes.statusCode);
-        res.end('proxy error');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'] });
-      imgRes.pipe(res);
-    }).on('error', (err) => {
-      console.error('[图片代理] 代理出错：', err);
-      res.writeHead(500);
-      res.end('proxy error');
-    });
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
-});
-server.listen(30099);
 
 ipcMain.handle('open-article', (event, { link, title }) => {
   const win = new BrowserWindow({

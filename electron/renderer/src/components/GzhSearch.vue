@@ -37,6 +37,8 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { ElMessage } from 'element-plus';
 import ArticleList from './ArticleList.vue';
+import { useProxyImg } from './ProxyImgMixin';
+
 const props = defineProps({ selectedGzh: Object });
 const keyword = ref('');
 const searching = ref(false);
@@ -44,9 +46,7 @@ const gzhList = ref([]);
 const selectedGzh = ref(null);
 const panelRef = ref(null);
 
-function getProxyUrl(url) {
-  return `http://localhost:30099/proxy-img?url=${encodeURIComponent(url)}`;
-}
+const { getProxyUrl } = useProxyImg();
 
 async function searchGzh() {
   if (!keyword.value.trim()) return;
