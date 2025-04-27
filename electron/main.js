@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, BrowserView, clipboard, dialog } = require('electron');
 const path = require('path');
+const { getUserDataPath } = require('./userDataPath');
 const fs = require('fs');
 const { getLoginQRCode} = require('../login');
 const { searchGzh, getArticles, aiReadArticle, aiReadArticleStream, exportArticlePdf } = require('../wechat_spider_allpages');
@@ -8,15 +9,14 @@ const Database = require('better-sqlite3');
 const http = require('http');
 const url = require('url');
 const https = require('https');
-const { Configuration, OpenAIApi } = require('openai');
-const puppeteer = require('puppeteer');
-const os = require('os');
 dotenv.config();
 
 let browser = null;
 let page = null;
 let token = null;
-const db = new Database('fav.db');
+const dbPath = getUserDataPath('fav.db');
+const cookiePath = getUserDataPath('wechat_cookies.json');
+const db = new Database(dbPath);
 db.prepare(`CREATE TABLE IF NOT EXISTS fav_gzh (
   fakeid TEXT PRIMARY KEY,
   nickname TEXT,
@@ -136,7 +136,6 @@ ipcMain.handle('check-login', async () => {
 
     // 新增：保存cookie到文件
     const cookies = await page.cookies();
-    const cookiePath = path.join(__dirname, '../wechat_cookies.json');
     fs.writeFileSync(cookiePath, JSON.stringify(cookies, null, 2));
     
     return { status: 'success' };

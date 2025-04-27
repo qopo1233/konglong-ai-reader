@@ -1,10 +1,7 @@
 const axios = require('axios');
-const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 const { getUserAgent } = require('./agent');
-const readline = require('readline');
-const e = require('cors');
 const { OpenAI } = require('openai');
 const os = require('os');
 const puppeteer = require('puppeteer');

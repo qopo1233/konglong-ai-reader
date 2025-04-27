@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const { getUserDataPath } = require('./electron/userDataPath');
 const { exec } = require('child_process');
 const qrcode = require('qrcode-terminal');
 const { Jimp } = require("jimp");
@@ -9,9 +10,9 @@ const https = require('https');
 const http = require('http');
 
 // Cookie 文件路径
-const COOKIE_PATH = path.join(__dirname, 'wechat_cookies.json');
+const COOKIE_PATH = getUserDataPath('wechat_cookies.json');
 // 二维码图片保存路径
-const QR_CODE_PATH = path.join(__dirname, 'qrcode.png');
+const QR_CODE_PATH = getUserDataPath('qrcode.png');
 
 /**
  * 检查是否已登录微信公众平台
@@ -325,12 +326,7 @@ async function getLoginQRCode() {
       console.log('Cookie已失效，需要扫码登录');
     }
   }
-  // 未登录，获取二维码
-  const STATIC_DIR = path.join(__dirname, 'static');
-  if (!fs.existsSync(STATIC_DIR)) {
-    fs.mkdirSync(STATIC_DIR, { recursive: true });
-  }
-  const qrCodePath = path.join(STATIC_DIR, `qrcode_wechat.png`);
+  const qrCodePath = getUserDataPath('qrcode_wechat.png');
   try {
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();

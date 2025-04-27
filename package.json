@@ -1,5 +1,5 @@
 {
-  "name": "wechat-electron-spider",
+  "name": "konglong-reader",
   "version": "1.0.0",
   "description": "恐龙公众号爬虫",
   "main": "electron/main.js",
@@ -9,8 +9,8 @@
     "dist": "electron-builder"
   },
   "build": {
-    "appId": "com.example.wechatspider",
-    "productName": "微信爬虫桌面版",
+    "appId": "com.konglongreader.desktop",
+    "productName": "恐龙微信公众号阅读桌面版",
     "directories": {
       "buildResources": "electron/renderer"
     },
@@ -35,10 +35,9 @@
     }
   },
   "dependencies": {
-    "@vitejs/plugin-vue": "^5.2.3",
+    "axios": "^1.9.0",
     "better-sqlite3": "^11.9.1",
     "dotenv": "^16.5.0",
-    "electron": "^28.2.3",
     "element-plus": "^2.9.8",
     "jimp": "^0.22.10",
     "markdown-it": "^14.1.0",
@@ -46,11 +45,13 @@
     "puppeteer": "^21.0.0",
     "qrcode-reader": "^1.0.4",
     "qrcode-terminal": "^0.12.0",
-    "vite": "^6.3.2",
     "vue": "^3.5.13"
   },
   "devDependencies": {
-    "electron-builder": "^24.6.0"
+    "@vitejs/plugin-vue": "^5.2.3",
+    "electron": "^28.2.3",
+    "electron-builder": "^24.6.0",
+    "vite": "^6.3.2"
   },
   "author": "",
   "license": "MIT",

@@ -5,3 +5,4 @@ qrcode.png
 wechat_cookies.json
 .env
 static/qrcode_wechat.png
+dist
