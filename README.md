@@ -1,6 +1,6 @@
 [English](README.en.md) | [中文说明](README.md)
 
-# 恐龙公众号阅读器（Konglong WeChat Official Account Reader）
+# 恐龙公众号阅读器
 
 一个跨平台的 Electron 应用，用于微信公众账号的登录、文章搜索、收藏与 AI 总结，支持多种高级配置。
 
