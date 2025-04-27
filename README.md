@@ -18,7 +18,15 @@
 
 ## 截图
 
-> _可在此处添加登录、文章列表、AI 总结、设置面板等界面截图_
+登录:
+![登录](docs/login.jpg)
+
+文章列表 & AI阅读:
+![文章列表](docs/article-list.jpg)
+![AI阅读](docs/ai-reader.jpg)
+
+模型设置:
+![模型设置](docs/model-setting.jpg)
 
 ## 快速开始
 

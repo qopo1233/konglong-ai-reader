@@ -16,6 +16,17 @@ A cross-platform Electron application for reading, searching, and managing WeCha
 - **Modern UI**: Built with Vue 3 and Element Plus.
 - **Cross-platform**: Windows, macOS, Linux.
 
+## ScreenShot
+Login:
+![Login](docs/login.jpg)
+
+ArticleList & AI-Reader:
+![ArticleList](docs/article-list.jpg)
+![AIReader](docs/ai-reader.jpg)
+
+Model-Setting:
+![Model-Setting](docs/model-setting.jpg)
+
 ## Getting Started
 
 ### Prerequisites
