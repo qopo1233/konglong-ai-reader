@@ -1,4 +1,4 @@
-[English](README.md) | [中文说明](README.zh.md)
+[English](README.en.md) | [中文说明](README.md)
 
 # 恐龙公众号阅读器（Konglong WeChat Official Account Reader）
 
