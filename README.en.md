@@ -112,4 +112,4 @@ Pull requests are welcome! For major changes, please open an issue first.
 
 ## Disclaimer
 
-This project is intended for educational purposes only. Any illegal use is strictly prohibited. The project and its authors bear no responsibility for any consequences arising from misuse.
+This project is for educational and research purposes regarding Electron technology only. Any illegal use is strictly prohibited. Users bear full legal responsibility for any consequences resulting from the use of this project. The developers accept no liability, and all outcomes are unrelated to this project.
