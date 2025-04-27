@@ -15,7 +15,7 @@ dotenv.config();
 let browser = null;
 let page = null;
 let token = null;
-const dbPath = getUserDataPath('fav.db');
+const dbPath = getUserDataPath('ai-reader.db');
 const cookiePath = getUserDataPath('wechat_cookies.json');
 const db = new Database(dbPath);
 db.prepare(`CREATE TABLE IF NOT EXISTS fav_gzh (

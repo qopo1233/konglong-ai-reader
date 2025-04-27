@@ -75,7 +75,7 @@ npm run dist:win:ia32
 6. **设置面板**：在"设置→模型配置"中自定义 OpenAI API 地址、模型、流式输出和 API Key。
 
 ## 配置说明
-- 所有用户设置和收藏均保存在本地 SQLite 数据库（`fav.db`）。
+- 所有用户设置和收藏均保存在本地 SQLite 数据库（`ai-reader.db`）。
 - OpenAI API 配置可在应用内"设置→模型配置"页面修改。
 
 ## 目录结构

@@ -76,7 +76,7 @@ npm run dist:win:ia32
 
 ## Configuration
 
-- All user settings and favorites are stored in local SQLite (`fav.db`).
+- All user settings and favorites are stored in local SQLite (`ai-reader.db`).
 - OpenAI API settings can be configured in-app.
 
 ## Project Structure
