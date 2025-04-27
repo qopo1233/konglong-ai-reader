@@ -109,3 +109,7 @@ Pull requests are welcome! For major changes, please open an issue first.
 ## Acknowledgements
 
 - Thanks to all contributors and the open source community.
+
+## Disclaimer
+
+This project is intended for educational purposes only. Any illegal use is strictly prohibited. The project and its authors bear no responsibility for any consequences arising from misuse.
