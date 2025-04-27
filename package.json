@@ -6,7 +6,10 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:win:x64": "electron-builder --win --x64",
+    "dist:win:ia32": "electron-builder --win --ia32"
   },
   "build": {
     "appId": "com.konglongreader.desktop",
@@ -29,11 +32,13 @@
       "node_modules/puppeteer/.local-chromium/**"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "${productName}-setup-${version}-${os}-${arch}.${ext}"
     },
     "mac": {
       "target": "dmg",
-      "icon": "icon.icns"
+      "icon": "icon.icns",
+      "artifactName": "${productName}-setup-${version}-${os}-${arch}.${ext}"
     }
   },
   "dependencies": {
