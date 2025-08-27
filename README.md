@@ -50,7 +50,10 @@ npm install
 ```bash
 npm run start
 ```
-
+### 前端编译
+```
+cd electron/renderer && npx vite build
+```
 ### 打包发布
 
 ```bash
