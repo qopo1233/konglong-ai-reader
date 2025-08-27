@@ -2,8 +2,8 @@
   <div class="article-list-panel">
     <el-card v-if="selectedGzh" class="article-card" shadow="never">
       <template #header>
-        <div>
-          <div style="display: flex; align-items: center; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center;">
             <img v-if="selectedGzh.round_head_img" :src="getProxyUrl(selectedGzh.round_head_img)" class="gzh-avatar-header" alt="头像" />
             <span>{{ selectedGzh.nickname || '文章列表' }}</span>
             <el-button
@@ -16,12 +16,12 @@
               {{ gzhFav ? '取消收藏' : '收藏公众号' }}
             </el-button>
           </div>
-          <div style="margin-top: 10px;">
+          <div>
             <el-input
               v-model="searchKeyword"
               placeholder="搜索文章"
               clearable
-              style="width: 300px;"
+              style="width: 250px;"
               @keyup.enter="handleSearch"
               @clear="handleClearSearch"
             >
@@ -34,7 +34,11 @@
         <!-- <el-button class="float-right" size="small" @click="exportArticles" :disabled="!articles.length">导出</el-button> -->
       </template>
       <el-table :data="articles" style="width:100%;" row-class-name="fixed-row-height" @row-click="handleRowClick" v-loading="loading">
-        <el-table-column prop="title" label="标题" show-overflow-tooltip />
+        <el-table-column label="标题" show-overflow-tooltip>
+          <template #default="scope">
+            <span v-html="scope.row.title"></span>
+          </template>
+        </el-table-column>
         <el-table-column prop="author" label="作者" show-overflow-tooltip :width="80" />
         <el-table-column prop="digest" label="摘要" show-overflow-tooltip :min-width="100" />
         <el-table-column prop="update_time" label="时间" :width="130">
@@ -325,7 +329,7 @@ onBeforeUnmount(() => {
   object-fit: cover;
 }
 </style>
-
+<!-- 全局样式，不使用 scoped，确保可以应用到 v-html 内容 -->
 <style>
 .markdown-body {
   font-size: 15px;
@@ -360,4 +364,13 @@ onBeforeUnmount(() => {
   width: 1000px !important;
   max-width: 90vw;
 }
-</style> 
+
+/* 高亮样式 */
+em.highlight {
+  font-style: normal !important;
+  font-weight: bold !important;
+  color: #07c160 !important;
+  background-color: rgba(245, 108, 108, 0.1) !important;
+  padding: 0 2px !important;
+}
+</style>

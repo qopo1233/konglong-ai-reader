@@ -212,26 +212,56 @@ ipcMain.handle('get-articles', async (event, { fakeid, pageIndex, pageSize, quer
     console.error('get-articles: page未初始化');
     return { articles: [], totalCount: 0, error: '未初始化登录' };
   }
-  try {
-    // 每次动态获取token
-    const url = page.url();
-    const tokenMatch = url.match(/token=(\d+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
-    if (!token) {
-      console.error('get-articles: token未获取到，url=', url);
-      return { articles: [], totalCount: 0, error: 'token未获取到' };
+  
+  // 最大重试次数
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      // 检查页面状态
+      if (!page.isClosed()) {
+        // 每次动态获取token
+        const url = page.url();
+        const tokenMatch = url.match(/token=(\d+)/);
+        const token = tokenMatch ? tokenMatch[1] : null;
+        if (!token) {
+          console.error('get-articles: token未获取到，url=', url);
+          return { articles: [], totalCount: 0, error: 'token未获取到' };
+        }
+        console.log('get-articles: fakeid=', fakeid, 'pageIndex=', pageIndex, 'pageSize=', pageSize, 'token=', token, 'query=', query);
+        const begin = pageIndex * pageSize;
+        const result = await getArticles(page, fakeid, begin, pageSize, '', token, query);
+        if (!result.articles || !result.articles.length) {
+          console.error('get-articles: 未获取到文章，result=', result);
+        }
+        return result;
+      } else {
+        // 页面已关闭，需要重新初始化
+        console.log('get-articles: 页面已关闭，尝试重新初始化...');
+        await initBrowser();
+        retryCount++;
+        continue;
+      }
+    } catch (e) {
+      console.error(`get-articles error (尝试 ${retryCount + 1}/${maxRetries}):`, e);
+      
+      // 特殊处理 "Requesting main frame too early" 错误
+      if (e.message && e.message.includes('Requesting main frame too early')) {
+        console.log('检测到 "Requesting main frame too early" 错误，等待页面稳定后重试...');
+        // 等待一段时间
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        retryCount++;
+        continue;
+      }
+      
+      // 其他错误直接返回
+      return { articles: [], totalCount: 0, error: e.message || String(e) };
     }
-    console.log('get-articles: fakeid=', fakeid, 'pageIndex=', pageIndex, 'pageSize=', pageSize, 'token=', token, 'query=', query);
-    const begin = pageIndex * pageSize;
-    const result = await getArticles(page, fakeid, begin, pageSize, '', token, query);
-    if (!result.articles || !result.articles.length) {
-      console.error('get-articles: 未获取到文章，result=', result);
-    }
-    return result;
-  } catch (e) {
-    console.error('get-articles error:', e);
-    return { articles: [], totalCount: 0, error: e.message || String(e) };
   }
+  
+  // 所有重试都失败
+  return { articles: [], totalCount: 0, error: `获取文章失败，已重试 ${maxRetries} 次` };
 });
 
 // 收藏/取消收藏公众号
