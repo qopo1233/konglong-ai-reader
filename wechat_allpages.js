@@ -15,7 +15,7 @@ const os = require('os');
  * @param {string} token 登录token
  * @returns {Promise<object>} 返回接口原始数据
  */
-async function getArticles(page, fakeid, begin = 0, count = 5, fingerprint = '', token = '') {
+async function getArticles(page, fakeid, begin = 0, count = 5, fingerprint = '', token = '', query = '') {
   // 获取token
   if (!token) {
     const url = page.url();
@@ -33,11 +33,11 @@ async function getArticles(page, fakeid, begin = 0, count = 5, fingerprint = '',
   // 构造请求参数
   const listUrl = 'https://mp.weixin.qq.com/cgi-bin/appmsgpublish';
   const params = new URLSearchParams({
-    sub: 'list',
-    search_field: 'null',
+    sub: query ? 'search' : 'list',
+    search_field: query ? '7' :'null',
     begin: begin.toString(),
     count: count.toString(),
-    query: '',
+    query: query || '',
     fakeid: fakeid,
     type: '101_1',
     free_publish_type: '1',

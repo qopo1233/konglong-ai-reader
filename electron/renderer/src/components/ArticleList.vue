@@ -2,17 +2,35 @@
   <div class="article-list-panel">
     <el-card v-if="selectedGzh" class="article-card" shadow="never">
       <template #header>
-        <img v-if="selectedGzh.round_head_img" :src="getProxyUrl(selectedGzh.round_head_img)" class="gzh-avatar-header" alt="头像" />
-        <span>{{ selectedGzh.nickname || '文章列表' }}</span>
-        <el-button
-          v-if="selectedGzh"
-          size="small"
-          :type="gzhFav ? 'warning' : 'info'"
-          @click="toggleGzhFav"
-          style="margin-left: 12px;"
-        >
-          {{ gzhFav ? '取消收藏' : '收藏公众号' }}
-        </el-button>
+        <div>
+          <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <img v-if="selectedGzh.round_head_img" :src="getProxyUrl(selectedGzh.round_head_img)" class="gzh-avatar-header" alt="头像" />
+            <span>{{ selectedGzh.nickname || '文章列表' }}</span>
+            <el-button
+              v-if="selectedGzh"
+              size="small"
+              :type="gzhFav ? 'warning' : 'info'"
+              @click="toggleGzhFav"
+              style="margin-left: 12px;"
+            >
+              {{ gzhFav ? '取消收藏' : '收藏公众号' }}
+            </el-button>
+          </div>
+          <div style="margin-top: 10px;">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索文章"
+              clearable
+              style="width: 300px;"
+              @keyup.enter="handleSearch"
+              @clear="handleClearSearch"
+            >
+              <template #append>
+                <el-button @click="handleSearch">搜索</el-button>
+              </template>
+            </el-input>
+          </div>
+        </div>
         <!-- <el-button class="float-right" size="small" @click="exportArticles" :disabled="!articles.length">导出</el-button> -->
       </template>
       <el-table :data="articles" style="width:100%;" row-class-name="fixed-row-height" @row-click="handleRowClick" v-loading="loading">
@@ -93,6 +111,7 @@ const aiSummary = ref('');
 const aiDone = ref(false);
 const aiDialogVisible = ref(false);
 const aiArticleTitle = ref('');
+const searchKeyword = ref('');
 let aiStreamBox = null;
 const md = new MarkdownIt();
 const loading = ref(false);
@@ -120,7 +139,8 @@ async function fetchArticles() {
     const result = await window.electronAPI.invoke('get-articles', {
       fakeid: props.selectedGzh.fakeid,
       pageIndex: currentPage.value,
-      pageSize
+      pageSize,
+      query: searchKeyword.value
     });
     if (result.error) {
       ElMessage.error('获取文章出错：' + result.error);
@@ -180,6 +200,7 @@ async function toggleArticleFav(article) {
 
 watch(() => props.selectedGzh, () => {
   currentPage.value = 0;
+  searchKeyword.value = ''; // 重置搜索关键词
   fetchArticles();
   updateGzhFav();
 }, { immediate: true });
@@ -237,6 +258,17 @@ function handleAiStream(event, data) {
     console.log('[AI流式] done收到，aiSummary:', aiSummary.value);
     aiDone.value = true;
   }
+}
+
+function handleSearch() {
+  currentPage.value = 0;
+  fetchArticles();
+}
+
+function handleClearSearch() {
+  searchKeyword.value = '';
+  currentPage.value = 0;
+  fetchArticles();
 }
 
 function handleRowClick(row) {

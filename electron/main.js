@@ -207,7 +207,7 @@ ipcMain.handle('search-gzh', async (event, keyword) => {
 });
 
 // 4. 获取文章分页
-ipcMain.handle('get-articles', async (event, { fakeid, pageIndex, pageSize }) => {
+ipcMain.handle('get-articles', async (event, { fakeid, pageIndex, pageSize, query }) => {
   if (!page) {
     console.error('get-articles: page未初始化');
     return { articles: [], totalCount: 0, error: '未初始化登录' };
@@ -221,9 +221,9 @@ ipcMain.handle('get-articles', async (event, { fakeid, pageIndex, pageSize }) =>
       console.error('get-articles: token未获取到，url=', url);
       return { articles: [], totalCount: 0, error: 'token未获取到' };
     }
-    console.log('get-articles: fakeid=', fakeid, 'pageIndex=', pageIndex, 'pageSize=', pageSize, 'token=', token);
+    console.log('get-articles: fakeid=', fakeid, 'pageIndex=', pageIndex, 'pageSize=', pageSize, 'token=', token, 'query=', query);
     const begin = pageIndex * pageSize;
-    const result = await getArticles(page, fakeid, begin, pageSize, '', token);
+    const result = await getArticles(page, fakeid, begin, pageSize, '', token, query);
     if (!result.articles || !result.articles.length) {
       console.error('get-articles: 未获取到文章，result=', result);
     }
