@@ -129,6 +129,24 @@ function createWindow() {
   return win;
 }
 
+async function ensurePage() {
+  if (!page || page.isClosed()) {
+    console.log('页面不存在或已关闭，重新初始化...');
+    page = await initBrowser();
+  }
+
+  // 检查 frame 是否正常
+  try {
+    await page.waitForLoadState?.('domcontentloaded', { timeout: 5000 });
+  } catch (err) {
+    console.log('页面 frame 不可用，重新初始化...');
+    page = await initBrowser();
+    await page.waitForLoadState?.('domcontentloaded').catch(() => {});
+  }
+
+  return page;
+}
+
 app.setName('恐龙公众号爬虫');
 app.setAboutPanelOptions({
   applicationName: '恐龙公众号爬虫',
@@ -161,12 +179,23 @@ ipcMain.handle('get-qrcode', async () => {
     browser = result.browser;
     page = result.page;
     if (result.loggedIn) {
+      setInterval(async () => {
+        if (page && !page.isClosed()) {
+          await page.evaluate(() => document.body.innerText.length);
+        }
+      }, 60000);
       // 已登录，无需二维码
       return { loggedIn: true };
     }
     // 读取二维码图片为base64
     const imgBuffer = fs.readFileSync(result.qrCodePath);
     const base64 = 'data:image/png;base64,' + imgBuffer.toString('base64');
+    
+    setInterval(async () => {
+        if (page && !page.isClosed()) {
+          await page.evaluate(() => document.body.innerText.length);
+        }
+      }, 60000);
     return { qrcode: base64, loggedIn: false };
   } catch (e) {
     return { error: e.message };
@@ -195,16 +224,41 @@ ipcMain.handle('check-login', async () => {
 
 // 3. 搜索公众号
 ipcMain.handle('search-gzh', async (event, keyword) => {
-  if (!page) return { error: '未初始化登录页面' };
-  try {
-    console.log('search-gzh 当前page.url:', page.url());
-    const list = await searchGzh(page, keyword);
-    return { list };
-  } catch (e) {
-    console.error('search-gzh error:', e);
-    return { error: e.message || String(e) };
+  const maxRetries = 3;
+  let retryCount = 0;
+
+  while (retryCount < maxRetries) {
+    try {
+      const currentPage = await ensurePage(); // ✅ 确保 page 可用
+
+      console.log('search-gzh 当前page.url:', currentPage.url());
+
+      const list = await searchGzh(currentPage, keyword);
+      return { list };
+
+    } catch (e) {
+      console.error(`search-gzh error (尝试 ${retryCount + 1}/${maxRetries}):`, e);
+
+      // 如果还是 main frame 错误，直接强制重建 page
+      if (e.message?.includes('Requesting main frame too early')) {
+        console.log('检测到 main frame 错误，强制重建 page...');
+        page = null; // 清空旧引用
+        retryCount++;
+        continue;
+      }
+
+      retryCount++;
+      if (retryCount >= maxRetries) {
+        return { error: e.message || String(e) };
+      }
+
+      await new Promise(r => setTimeout(r, 1000));
+    }
   }
+
+  return { error: `搜索公众号失败，已重试 ${maxRetries} 次` };
 });
+
 
 // 4. 获取文章分页
 ipcMain.handle('get-articles', async (event, { fakeid, pageIndex, pageSize, query }) => {

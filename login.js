@@ -314,7 +314,14 @@ async function decodeQRCode(imagePath) {
 async function getLoginQRCode() {
   // 检查本地cookie是否已登录
   if (fs.existsSync(COOKIE_PATH)) {
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
+      ]
+    });
     const page = await browser.newPage();
     const cookies = JSON.parse(fs.readFileSync(COOKIE_PATH, 'utf-8'));
     await page.setCookie(...cookies);
